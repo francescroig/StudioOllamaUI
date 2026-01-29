@@ -1,0 +1,9 @@
+# Ignorar carpetas pesadas de software externo
+FirefoxPortable/
+ollama/
+Progs/
+
+# Ignorar archivos temporales y reportes
+reporte_proyecto.txt
+*.lnk
+*.log
