@@ -1,7 +1,0 @@
-- Hay 1 modelo incluido en local, qwen3, este funciona sin internet, seleccionalo en el seleccionador de modelos.
--Hay incorporados modelos cloud muy potentes de ollama, para usarlos debes estar registrado en ollama y tener una clave API (gratuita) que puedes obtener en ollama. Introducela en configuracion y luego te vas a la carpeta ollama, donde esta ollama.exe y abres una terminal y pones:ollama.exe signin y ya esta, solo has de hacerlo una vez.
--Al iniciar el programa veras que se te abren 4 terminales, no las cierres, solo minimizalas, son los servers y han de estar funcionando todo el rato. Cuando cierres firefox los servers se apagaran solos y puedes cerrarlas.
--Para la busqueda web puedes seleccionar duckduckgo o wikipedia, funcionan sin api, pero te recomiendo que elijas tavily e introduzcas tu clave api (gratuita) es mucho mejor. Solo debes introducirla una vez.
--Recuerda tener cerrado tu firefox cuando inicies esta aplicacion, luego puedes abrirlo de nuevo una vez haya arrancado, si lo tienes abierto se negara a arrancar.
--Puedes usar el boton de descargar modelos para que te los descargue automaticamente de ollama.com solamente vigila de poner el nombre exacto tal y como aparece en ollama. Ej: deepseek-R1:14b
--Aun he de currarme mas la ayuda y hacer que las terminales se oculten en la barra de tareas, pero bueno, lo principal ya esta hecho.

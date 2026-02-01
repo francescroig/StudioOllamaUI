@@ -1,10 +1,18 @@
-import { Message } from '../store';
+/**
+ * StudioOllamaUI  Copyright (C) 2026  francescroig
+ * This program comes with ABSOLUTELY NO WARRANTY.
+ * This is free software, and you are welcome to redistribute it
+ * under certain conditions; see the LICENSE file for details.
+ */
+import { useTranslation } from '../i18n';
 
-export default function MessageList({ messages }: { messages: Message[] }) {
+export default function MessageList({ messages }: { messages: any[] }) {
+  const { t } = useTranslation();
+  
   if (!messages || messages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-gray-600 text-sm italic">
-        Inicia una conversación para empezar...
+        {t('startConversation')}
       </div>
     );
   }

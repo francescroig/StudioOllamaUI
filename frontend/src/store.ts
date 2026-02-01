@@ -1,3 +1,9 @@
+/**
+ * StudioOllamaUI  Copyright (C) 2026  francescroig
+ * This program comes with ABSOLUTELY NO WARRANTY.
+ * This is free software, and you are welcome to redistribute it
+ * under certain conditions; see the LICENSE file for details.
+ */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -36,12 +42,13 @@ export const useStore = create<any>(
       criticalMode: false,
       temperature: loadFromStorage('temperature', 0.7),
       reasoningLevel: loadFromStorage('reasoningLevel', 'standard'),
-      ollamaConfig: loadFromStorage('ollamaConfig', { apiUrl: 'http://127.0.0.1:11434', apiKey: '' }),
+      ollamaConfig: loadFromStorage('ollamaConfig', { apiUrl: 'http://127.0.0.1:11434' }),
       searchAPIs: loadFromStorage('searchAPIs', { tavily: '', google: '', bing: '', duckduckgo: '' }),
-      tokenStats: loadFromStorage('tokenStats', { totalTokens: 0 }),
+      tokenStats: loadFromStorage('tokenStats', { totalTokens: 0, inputTokens: 0, outputTokens: 0 }),
       isGenerating: false,
       globalPrompt: loadFromStorage('globalPrompt', ''),
       workingDirectory: loadFromStorage('workingDirectory', ''),
+      contextSize: loadFromStorage('contextSize', 4), // Número de pares pregunta-respuesta a recordar
 
       fetchModels: async () => {
         try {
@@ -85,6 +92,11 @@ export const useStore = create<any>(
           set({ conversations: convs });
           saveToStorage('conversations', convs);
         }
+      },
+
+      setMessages: (messages: any[]) => {
+        set({ messages });
+        // No actualizar conversación guardada, solo la memoria temporal
       },
 
       updateLastMessage: (content: string) => {
@@ -162,6 +174,11 @@ export const useStore = create<any>(
       setWorkingDirectory: (dir: string) => {
         set({ workingDirectory: dir });
         saveToStorage('workingDirectory', dir);
+      },
+      
+      setContextSize: (size: number) => {
+        set({ contextSize: size });
+        saveToStorage('contextSize', size);
       },
       
       createNewConversation: () => {

@@ -2,7 +2,7 @@
 # Script para verificar la instalación de OllaGPT
 
 echo "=========================================="
-echo "  OllaGPT - Verificador de Instalación"
+echo "  StudioOllamaUI - Verificador de Instalación"
 echo "=========================================="
 echo ""
 

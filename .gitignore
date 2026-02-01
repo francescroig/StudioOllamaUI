@@ -1,9 +1,71 @@
-# Ignorar carpetas pesadas de software externo
-FirefoxPortable/
-ollama/
-Progs/
-
-# Ignorar archivos temporales y reportes
-reporte_proyecto.txt
+# Archivos ejecutables y portables
+*.exe
+*.dll
 *.lnk
+
+# Node modules
+node_modules/
+node_cache/
+frontend/node_cache/
+frontend/server/node_cache/
+
+# Carpetas de trabajo y temporales
+WorkFolder/
+frontend/WorkFolder/
+
+# Node.js portable
+node-v22/
+
+# Ollama portable
+ollama/
+
+# Firefox portable
+FirefoxPortable/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archivos de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+dist/
+build/
+out/
+
+# Archivos de caché
+.cache/
+*.cache
+
+# Archivos de respaldo
+*.bak
+*.backup
+*~
+
+# Archivos de imágenes (si no son necesarios en el repo)
+images/
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif

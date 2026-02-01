@@ -1,4 +1,8 @@
 @echo off
+REM StudioOllamaUI  Copyright (C) 2026  francescroig
+REM This program comes with ABSOLUTELY NO WARRANTY.
+REM This is free software, and you are welcome to redistribute it
+REM under certain conditions; see the LICENSE file for details.
 setlocal enabledelayedexpansion
 
 title StudioOllamaUI - Iniciando
@@ -17,13 +21,13 @@ set OLLAMA_DIR=%SCRIPT_DIR%\ollama
 set MODELOS_DIR=%OLLAMA_DIR%\.ollama\models
 
 set FRONTEND_DIR=%SCRIPT_DIR%\frontend
-set NODE_DIR=%SCRIPT_DIR%\Progs
+set NODE_DIR=%SCRIPT_DIR%\node-v22
 set WORK_DIR=%SCRIPT_DIR%\work
 
 if not exist "%WORK_DIR%" mkdir "%WORK_DIR%"
 
 set OLLAMA_MODELS=%MODELOS_DIR%
-set PATH=%NODE_DIR%;%OLLAMA_DIR%;%PATH%
+set PATH=%NODE_DIR%;%NODE_DIR%\node_global;%OLLAMA_DIR%;%PATH%
 
 echo Paso 1: Verificando componentes...
 echo.
@@ -42,7 +46,7 @@ if not exist "%MODELOS_DIR%" (
 )
 echo OK - Modelos
 
-if not exist "%NODE_DIR%\nodejs-portable.exe" (
+if not exist "%NODE_DIR%\node.exe" (
     echo ERROR: Node.js no encontrado
     pause
     exit /b 1

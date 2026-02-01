@@ -1,4 +1,10 @@
-﻿import { FileCommandProcessor } from "./fileCommandProcessor";
+﻿/**
+ * StudioOllamaUI  Copyright (C) 2026  francescroig
+ * This program comes with ABSOLUTELY NO WARRANTY.
+ * This is free software, and you are welcome to redistribute it
+ * under certain conditions; see the LICENSE file for details.
+ */
+import { FileCommandProcessor } from "./fileCommandProcessor";
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -55,7 +61,8 @@ export const ollamaService = {
     messages: ChatMessage[],
     onStream: (chunk: string, stats?: any) => void,
     reasoningLevel: 'low' | 'medium' | 'high' = 'medium',
-    criticalMode: boolean = false
+    criticalMode: boolean = false,
+    onLog?: (log: string) => void  // Nuevo callback para logs
   ) {
     const safeModel =
       model && model.trim().length > 0 ? model : "deepseek-r1:14b";
@@ -86,9 +93,7 @@ INSTRUCCIONES CRÍTICAS:
 
 Si hay búsqueda web activa, usa las fuentes proporcionadas y cítalas explícitamente.
 Si no tienes información verificable, dilo claramente.`
-        : `Eres un asistente útil y conciso. Respondes de forma directa y precisa.
-
-Si el usuario pide ejecutar comandos de Windows (defragmentar, limpiar disco, ver procesos, etc.), proporciona el comando exacto para CMD o PowerShell de Windows, no para Linux.`
+        : `Eres un asistente útil y conciso. Respondes de forma directa y precisa.`
     };
 
     const hasSystemMessage = safeMessages.some(m => m.role === "system");
@@ -131,6 +136,18 @@ Si el usuario pide ejecutar comandos de Windows (defragmentar, limpiar disco, ve
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let thinkingBuffer = "";  // Buffer para contenido de <think>
+      let insideThink = false;
+      let chunkCount = 0;
+      let startTime = Date.now();
+      
+      // Log inicial (en inglés - universal)
+      if (onLog) {
+        onLog(`[INFO] Starting generation with model: ${safeModel}`);
+        onLog(`[INFO] Reasoning level: ${reasoningLevel} (context: ${reasoningParams[reasoningLevel].num_ctx} tokens)`);
+        if (criticalMode) onLog(`[WARN] Critical mode enabled - exhaustive verification active`);
+        onLog(`[INFO] Messages in context: ${messagesWithSystem.length}`);
+      }
       
       while (true) {
         const { value, done } = await reader.read();
@@ -147,6 +164,25 @@ Si el usuario pide ejecutar comandos de Windows (defragmentar, limpiar disco, ve
             
             // CAPTURA DE TOKENS: Si Ollama indica que terminó, enviamos las estadísticas
             if (json.done) {
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+              
+              if (onLog) {
+                onLog(`[DONE] Generation completed in ${elapsed}s`);
+                onLog(`[INFO] Total chunks received: ${chunkCount}`);
+                if (json.prompt_eval_count) {
+                  onLog(`[INFO] Input tokens: ${json.prompt_eval_count}`);
+                }
+                if (json.eval_count) {
+                  onLog(`[INFO] Output tokens: ${json.eval_count}`);
+                  const tokensPerSecond = (json.eval_count / parseFloat(elapsed)).toFixed(1);
+                  onLog(`[INFO] Speed: ${tokensPerSecond} tokens/s`);
+                }
+                if (json.total_duration) {
+                  const seconds = (json.total_duration / 1000000000).toFixed(2);
+                  onLog(`[INFO] Total duration (server): ${seconds}s`);
+                }
+              }
+              
               onStream("", {
                 promptTokens: json.prompt_eval_count || 0,
                 completionTokens: json.eval_count || 0
@@ -154,7 +190,41 @@ Si el usuario pide ejecutar comandos de Windows (defragmentar, limpiar disco, ve
             }
 
             const chunk = json?.message?.content;
-            if (typeof chunk === "string") {
+            if (typeof chunk === "string" && chunk.length > 0) {
+              chunkCount++;
+              
+              // Log cada 50 chunks para no saturar
+              if (onLog && chunkCount % 50 === 0) {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                onLog(`[DEBUG] Procesados ${chunkCount} chunks en ${elapsed}s`);
+              }
+              
+              // Detectar y capturar contenido de <think>
+              if (chunk.includes('<think>')) {
+                insideThink = true;
+                if (onLog) onLog('[THINK] 🧠 Iniciando cadena de razonamiento...');
+              }
+              
+              if (insideThink) {
+                thinkingBuffer += chunk;
+                
+                // Enviar logs línea por línea del pensamiento
+                if (onLog && chunk.includes('\n')) {
+                  const lines = thinkingBuffer.split('\n');
+                  thinkingBuffer = lines.pop() || '';
+                  lines.forEach(line => {
+                    const cleanLine = line.replace(/<\/?think>/g, '').trim();
+                    if (cleanLine) onLog(`[THINK] ${cleanLine}`);
+                  });
+                }
+              }
+              
+              if (chunk.includes('</think>')) {
+                insideThink = false;
+                if (onLog) onLog('[THINK] ✅ Razonamiento completado');
+                thinkingBuffer = "";
+              }
+              
               onStream(chunk);
             }
           } catch {

@@ -1,3 +1,9 @@
+/**
+ * StudioOllamaUI  Copyright (C) 2026  francescroig
+ * This program comes with ABSOLUTELY NO WARRANTY.
+ * This is free software, and you are welcome to redistribute it
+ * under certain conditions; see the LICENSE file for details.
+ */
 import axios from 'axios';
 
 export type SearchEngine = 'duckduckgo' | 'google' | 'bing' | 'tavily';

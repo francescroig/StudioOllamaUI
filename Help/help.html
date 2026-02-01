@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://b.sf-syn.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:;">
+    <link rel="icon" type="image/x-icon" href="./logo.ico">
+    <title>StudioOllamaUI – Documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    :root {
+      --bg: #0b0f1a;
+      --panel: #11162a;
+      --accent: #4cc9f0;
+      --accent-soft: #4895ef;
+      --text: #e6e9f0;
+      --muted: #9aa4bf;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top, #141a33, var(--bg));
+      color: var(--text);
+    }
+
+    /* Lógica de cambio de idioma */
+    body.lang-en .es { display: none; }
+    body.lang-es .en { display: none; }
+
+    header {
+      padding: 32px 24px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(76,201,240,0.15), rgba(72,149,239,0.05));
+      border-bottom: 1px solid rgba(76,201,240,0.25);
+      position: relative;
+    }
+
+    .lang-switcher {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .lang-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: bold;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.6rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-shadow: 0 0 12px rgba(76,201,240,0.5);
+    }
+
+    header p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px;
+      background: var(--panel);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-wrap: wrap;
+    }
+
+    .tab-button {
+      background: transparent;
+      border: 1px solid rgba(76,201,240,0.25);
+      color: var(--text);
+      padding: 10px 16px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    .tab-button:hover {
+      background: rgba(76,201,240,0.1);
+    }
+
+    .tab-button.active {
+      background: linear-gradient(135deg, rgba(76,201,240,0.25), rgba(72,149,239,0.15));
+      box-shadow: 0 0 10px rgba(76,201,240,0.4);
+      border-color: var(--accent);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fade 0.25s ease-in;
+      background: rgba(17,22,42,0.8);
+      padding: 24px 28px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-content h2 {
+      margin-top: 0;
+      color: var(--accent-soft);
+      letter-spacing: 0.5px;
+    }
+
+    ul { padding-left: 20px; }
+    li { margin-bottom: 10px; line-height: 1.5; color: var(--text); }
+
+    /* Estilos para la sección de prompts */
+    .prompt-card {
+      background: rgba(17,22,42,0.6);
+      border: 1px solid rgba(76,201,240,0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .prompt-card:hover {
+      background: rgba(17,22,42,0.9);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(76,201,240,0.2);
+    }
+
+    .prompt-card h3 {
+      margin-top: 0;
+      color: var(--accent);
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prompt-card .icon {
+      font-size: 1.3rem;
+    }
+
+    .prompt-text {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #a8dadc;
+      line-height: 1.6;
+      margin: 10px 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .copy-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent-soft);
+      box-shadow: 0 0 10px rgba(76,201,240,0.5);
+    }
+
+    .copy-btn.copied {
+      background: #4ade80;
+    }
+
+    footer {
+      text-align: center;
+      padding: 18px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: #0b0f1a;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  </head>
+  <body class="lang-es">
+    <header>
+      <div class="lang-switcher"> <button id="btn-es" class="lang-btn active" onclick="setLang('es')">ES</button>
+        <button id="btn-en" class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+      <h1>StudioOllamaUI</h1>
+      <p class="es">Documentación técnica, instrucciones de uso y ayuda.</p>
+      <p class="en">Technical documentation, instructions for use, and help.</p>
+    </header>
+    <nav class="tabs"> <button class="tab-button active" data-tab="download"><span
+
+          class="es">Descargas</span><span class="en">Downloads</span></button>
+      <button class="tab-button" data-tab="doc"><span class="es">Interfaz</span><span
+
+          class="en">Interface</span></button> <button class="tab-button" data-tab="features"><span
+
+          class="es">Características</span><span class="en">Features</span></button>
+      <button class="tab-button" data-tab="prompts"><span class="es">Prompts
+          Globales</span><span class="en">Global Prompts</span></button> <button
+
+        class="tab-button" data-tab="install"><span class="es">Requisitos</span><span
+
+          class="en">Requirements</span></button> <button class="tab-button" data-tab="usage"><span
+
+          class="es">Primeros pasos</span><span class="en">Getting Started</span></button>
+      <button class="tab-button" data-tab="api"><span class="es">Claves API</span><span
+
+          class="en">API Keys</span></button> <button class="tab-button" data-tab="security"><span
+
+          class="es">Seguridad</span><span class="en">Security</span></button> <button
+
+        class="tab-button" data-tab="faq">F.A.Q</button> <button class="tab-button"
+
+        data-tab="credits"><span class="es">Créditos</span><span class="en">Credits</span></button>
+    </nav>
+    <main>
+      <section id="download" class="tab-content active">
+        <h2 class="es">Descarga la última versión estable en Sourceforge.net</h2>
+        <h2 class="en">Download the latest stable version at Sourceforge.net</h2>
+ <!-- Botón de Actualización -->
+<div style="margin: 20px 0; text-align: center;">
+    <a href="https://sourceforge.net/projects/studioollamaui/" 
+       target="_blank" 
+       style="display: inline-block; 
+              padding: 12px 24px; 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white; 
+              text-decoration: none; 
+              border-radius: 8px; 
+              font-weight: bold;
+              font-size: 14px;
+              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+              transition: all 0.3s ease;
+              border: 2px solid rgba(255,255,255,0.2);"
+       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)';"
+       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+      🔄 Buscar Actualizaciones
+    </a>
+</div>
+         </section>
+      <section id="doc" class="tab-content">
+        <h2 class="es">Elementos de la interfaz</h2>
+        <h2 class="en">Interface Elements</h2>
+        <ul>
+          <li><b class="es">Botón nuevo chat:</b><b class="en">New chat button:</b>
+            <span class="es">Permite iniciar una nueva sesión de chat.</span><span
+
+              class="en">Allows you to start a new chat session.</span></li>
+          <li><b class="es">Motores de búsqueda:</b><b class="en">Search
+              engines:</b> <span class="es">Permite elegir el motor de búsqueda
+              deseado.</span><span class="en">Allows you to choose the desired
+              search engine.</span></li>
+          <li><b class="es">Botón búsqueda web:</b><b class="en">Web search
+              button:</b> <span class="es">Permite activar/desactivar el acceso
+              a búsqueda web del modelo.</span><span class="en">Allows you to
+              enable/disable the model's web search access.</span></li>
+          <li><b class="es">Selector de modelo:</b><b class="en">Model selector:</b>
+            <span class="es">Permite elegir el modelo deseado. Los modelos cloud
+              solo funcionarán si se dispone de conexión a internet y una clave
+              API válida de Ollama.</span><span class="en">Allows you to choose
+              the desired model; cloud models only work with internet and a
+              valid Ollama API key.</span></li>
+          <li><b class="es">Selector de razonamiento:</b><b class="en">Reasoning
+              selector:</b> <span class="es">En los modelos con capacidad de
+              "thinking" como qwen3, permite seleccionar el nivel de
+              razonamiento.</span><span class="en">In models with "thinking"
+              capacity like qwen3, it allows selecting the reasoning level.</span></li>
+          <li><b class="es">Deslizador de temperatura:</b><b class="en">Temperature
+              slider:</b> <span class="es">Ajusta la temperatura del modelo.
+              Niveles cercanos a cero dan más precisión, ideal para código.
+              Niveles cercanos a 2 dan más creatividad, ideal para escribir o
+              diseñar. Valor por defecto 0.7.</span><span class="en">Adjusts
+              model temperature: levels near zero provide more precision (ideal
+              for code), while levels near 2 provide more creativity (ideal for
+              writing). Default: 0.7.</span></li>
+          <li><b class="es">Historial de chat:</b><b class="en">Chat history:</b>
+            <span class="es">Guarda el historial de chat. Pueden eliminarse
+              chats del historial manualmente. Si se borran las cookies del
+              navegador se borrará todo el historial, así como las claves API.</span><span
+
+              class="en">Saves chat history. Chats can be manually deleted.
+              Deleting browser cookies will clear all history and API keys.</span></li>
+          <li><b class="es">Prompt global:</b><b class="en">Global prompt:</b> <span
+
+              class="es">Permite introducir un prompt que se incrustará en todas
+              las consultas que hagamos al modelo.</span><span class="en">Allows
+              entering a prompt that will be embedded in all queries made to the
+              model.</span></li>
+          <li><b class="es">Importar archivos:</b><b class="en">Import files:</b>
+            <span class="es">Permite copiar archivos desde tu sistema a la
+              carpeta WorkFolder para que el modelo pueda trabajar con ellos de
+              forma segura.</span><span class="en">Allows copying files from
+              your system to the WorkFolder so the model can work with them
+              safely.</span></li>
+          <li><b class="es">Revisión exhaustiva:</b><b class="en">Thorough
+              review:</b> <span class="es">Fuerza al modelo a verificar la
+              veracidad y exactitud de su respuesta. Evita alucinaciones del
+              modelo, pero no garantiza que el modelo dé una respuesta acertada.</span><span
+
+              class="en">Forces the model to verify the truthfulness and
+              accuracy of its response to avoid hallucinations (accuracy not
+              guaranteed).</span></li>
+          <li><b class="es">Contador de tokens:</b><b class="en">Token counter:</b>
+            <span class="es">Muestra la cantidad de tokens consumidos en todas
+              las sesiones. Se resetea al borrar las cookies del navegador.</span><span
+
+              class="en">Shows tokens consumed across all sessions; resets when
+              browser cookies are cleared.</span></li>
+          <li><b class="es">Botones TXT y HTML:</b><b class="en">TXT and HTML
+              buttons:</b> <span class="es">Permiten descargar el contenido de
+              la burbuja de chat como TXT o como HTML.</span><span class="en">Allow
+              downloading the chat bubble content as TXT or HTML.</span></li>
+          <li><b class="es">Botón naranja:</b><b class="en">Orange button:</b> <span
+
+              class="es">Permite descargar modelos fácilmente desde ollama.com,
+              además muestra los modelos instalados y permite también
+              desinstalarlos.</span><span class="en">Allows downloading models
+              from ollama.com, shows installed models, and allows
+              uninstallation.</span></li>
+          <li><b class="es">Botón verde:</b><b class="en">Green button:</b> <span
+
+              class="es">Muestra la ayuda.</span><span class="en">Shows help.</span></li>
+          <li><b class="es">Botón púrpura:</b><b class="en">Purple button:</b> <span
+
+              class="es">Permite introducir las claves API de Ollama y de los
+              buscadores.</span><span class="en">Allows entering API keys for
+               search engines.</span></li>
+          <li><b class="es">Botón enviar:</b><b class="en">Send button:</b> <span
+
+              class="es">Envía el prompt al modelo y también permite detener al
+              modelo si entra en un bucle.</span><span class="en">Sends the
+              prompt to the model and allows stopping it if it enters a loop.</span></li>
+        
+		<li><b class="es">Botón Terminal:</b><b class="en">Terminal button:</b> <span
+             class="es">Abre la terminal para visualizar logs de informacion.</span><span class="en">Open a terminal for watch information logs.</span></li>
+		
+		<li><b class="es">Botón Eliminar contexto:</b><b class="en">Clean context button:</b> <span
+             class="es">Borra la memoria de las ultimas 6 consultas introducidas, util para evitar que el modelo haga referencia a las ultimas consultas y mezcle los temas.</span><span class="en">Deletes the last 6 answers from the model's memory. Usefull for avoid the model mixes answer from last queries.</span></li>
+		
+		
+		
+		
+		
+		</ul>
+      </section>
+      <section id="features" class="tab-content">
+        <h2 class="es">Características</h2>
+        <h2 class="en">Features</h2>
+        <ul>
+          <li class="es">Completamente portable. No escribe ningún dato en el
+            sistema de archivos del usuario. Todas las escrituras se realizan en
+            la carpeta raíz StudioOllamaUI.</li>
+          <li class="en">Completely portable; writes no data to the user's file
+            system. All data is written within the StudioOllamaUI root folder.</li>
+          <li class="es">Los datos como claves API, modelos e historial de chat
+            se mantienen al portar la aplicación a otro dispositivo.</li>
+          <li class="en">Data such as API keys, models, and chat history are
+            preserved when porting the app to another device.</li>
+          <li class="es">A diferencia de la Ollama app, permite leer archivos
+            desde el sistema de archivos de forma segura (sandbox en
+            WorkFolder).</li>
+          <li class="en">Unlike the Ollama app, it allows reading files from the
+            file system safely (sandbox in WorkFolder).</li>
+          <li class="es">No es necesario instalar nada (Docker, Node.js, Python,
+            Firefox...) ni configurar nada.</li>
+          <li class="en">No need to install or configure anything (Docker,
+            Node.js, Python, Firefox, etc.).</li>
+          <li class="es">Enfocado en la privacidad y la facilidad de uso.</li>
+          <li class="en">Focused on privacy and ease of use.</li>
+          <li class="es">Completamente gratuito. Puede ser copiado y distribuido
+            libremente.</li>
+          <li class="en">Completely free. It can be freely copied and
+            distributed.</li>
+          <li class="es">Interfaz bilingüe (Español/English) con cambio
+            instantáneo.</li>
+          <li class="en">Bilingual interface (Spanish/English) with instant
+            switching.</li>
+        </ul>
+      </section>
+      <section id="prompts" class="tab-content">
+        <h2 class="es">🎯 Prompts Globales Predefinidos</h2>
+        <h2 class="en">🎯 Predefined Global Prompts</h2>
+        <p class="es">Copia estos prompts y pégalos en el campo "Prompt Global"
+          del sidebar para configurar el comportamiento del modelo:</p>
+        <p class="en">Copy these prompts and paste them into the "Global Prompt"
+          field in the sidebar to configure the model's behavior:</p>
+        <!-- Programador Senior -->
+        <div class="prompt-card">
+          <h3><span class="icon">💻</span> <span class="es">Programador Senior</span><span
+
+              class="en">Senior Programmer</span></h3>
+          <div class="prompt-text es">Eres un programador senior experto en múltiples lenguajes de programación (Python, JavaScript, TypeScript, C++, Java, etc.). Tu objetivo es:
+- Escribir código limpio, eficiente y bien documentado
+- Seguir las mejores prácticas y patrones de diseño
+- Explicar tu razonamiento y decisiones técnicas
+- Sugerir optimizaciones y mejoras
+- Detectar y corregir bugs
+- Proporcionar ejemplos prácticos y funcionales
+- Siempre documenta tu código con comentarios claros y útiles.</div>
+          <div class="prompt-text en">You are a senior programmer expert in multiple programming languages (Python, JavaScript, TypeScript, C++, Java, etc.). Your goal is to:
+- Write clean, efficient, and well-documented code
+- Follow best practices and design patterns
+- Explain your reasoning and technical decisions
+- Suggest optimizations and improvements
+- Detect and fix bugs
+- Provide practical and functional examples
+- Always document your code with clear and useful comments.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'programmer')"><span
+
+              class="es">📋 Copiar</span><span class="en">📋 Copy</span></button>
+        </div>
+        <!-- Traductor Experto -->
+        <div class="prompt-card">
+          <h3><span class="icon">🌐</span> <span class="es">Experto en
+              Traducciones</span><span class="en">Translation Expert</span></h3>
+          <div class="prompt-text es">Eres un experto traductor profesional multilingüe. Tu trabajo es:
+- Realizar traducciones precisas y naturales entre idiomas
+- Mantener el tono, estilo y contexto del texto original
+- Adaptar expresiones idiomáticas de forma apropiada
+- Respetar la terminología técnica cuando sea necesario
+- Explicar matices culturales o lingüísticos relevantes
+- Ofrecer alternativas cuando una traducción directa no sea óptima
+- Siempre pregunta el idioma de origen y destino si no están claros.</div>
+          <div class="prompt-text en">You are an expert professional multilingual translator. Your job is to:
+- Perform accurate and natural translations between languages
+- Maintain the tone, style, and context of the original text
+- Adapt idiomatic expressions appropriately
+- Respect technical terminology when necessary
+- Explain relevant cultural or linguistic nuances
+- Offer alternatives when direct translation is not optimal
+- Always ask for source and target languages if not clear.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'translator')"><span
+
+              class="es">📋 Copiar</span><span class="en">📋 Copy</span></button>
+        </div>
+        <!-- Buscador de Noticias -->
+        <div class="prompt-card">
+          <h3><span class="icon">📰</span> <span class="es">Buscador de
+              Noticias</span><span class="en">News Researcher</span></h3>
+          <div class="prompt-text es">Eres un investigador de noticias especializado en encontrar y analizar información actualizada. Tu función es:
+- Buscar noticias recientes y relevantes sobre temas específicos
+- Verificar la credibilidad de las fuentes
+- Proporcionar resúmenes objetivos y concisos
+- Contrastar información de múltiples fuentes
+- Detectar posibles sesgos o desinformación
+- Citar siempre las fuentes originales
+- Mantén un tono neutral y periodístico. Siempre indica la fecha de las noticias.</div>
+          <div class="prompt-text en">You are a news researcher specialized in finding and analyzing up-to-date information. Your role is to:
+- Search for recent and relevant news on specific topics
+- Verify source credibility
+- Provide objective and concise summaries
+- Cross-reference information from multiple sources
+- Detect possible bias or misinformation
+- Always cite original sources
+- Maintain a neutral and journalistic tone. Always indicate news dates.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'news')"><span class="es">📋
+              Copiar</span><span class="en">📋 Copy</span></button> </div>
+        <!-- Escritor de Novelas -->
+        <div class="prompt-card">
+          <h3><span class="icon">✍️</span> <span class="es">Escritor de Novelas</span><span
+
+              class="en">Novel Writer</span></h3>
+          <div class="prompt-text es">Eres un escritor creativo especializado en narrativa y creación de historias. Tu misión es:
+- Desarrollar tramas cautivadoras y bien estructuradas
+- Crear personajes profundos y creíbles con personalidades distintivas
+- Usar descripciones vívidas y evocadoras
+- Mantener coherencia narrativa y temporal
+- Adaptar el estilo al género solicitado (fantasía, ciencia ficción, thriller, etc.)
+- Desarrollar diálogos naturales y significativos
+- Siempre pregunta por el género, tono y longitud deseada antes de comenzar.</div>
+          <div class="prompt-text en">You are a creative writer specialized in narrative and storytelling. Your mission is to:
+- Develop captivating and well-structured plots
+- Create deep and believable characters with distinctive personalities
+- Use vivid and evocative descriptions
+- Maintain narrative and temporal consistency
+- Adapt style to requested genre (fantasy, sci-fi, thriller, etc.)
+- Develop natural and meaningful dialogues
+- Always ask about genre, tone, and desired length before starting.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'writer')"><span class="es">📋
+              Copiar</span><span class="en">📋 Copy</span></button> </div>
+        <!-- Corrector Ortográfico -->
+        <div class="prompt-card">
+          <h3><span class="icon">📝</span> <span class="es">Corrector
+              Ortográfico y Gramatical</span><span class="en">Spelling and
+              Grammar Checker</span></h3>
+          <div class="prompt-text es">Eres un corrector profesional experto en ortografía, gramática y estilo. Tu trabajo es:
+- Identificar y corregir errores ortográficos y gramaticales
+- Mejorar la puntuación y la estructura de las frases
+- Sugerir alternativas para mejorar claridad y fluidez
+- Mantener el tono y la intención del autor original
+- Señalar problemas de concordancia, tiempos verbales y sintaxis
+- Explicar las correcciones realizadas cuando sea útil
+- Proporciona el texto corregido y un resumen de los cambios principales.</div>
+          <div class="prompt-text en">You are a professional proofreader expert in spelling, grammar, and style. Your job is to:
+- Identify and correct spelling and grammatical errors
+- Improve punctuation and sentence structure
+- Suggest alternatives to enhance clarity and flow
+- Maintain the author's original tone and intent
+- Point out concordance, verb tense, and syntax issues
+- Explain corrections when helpful
+- Provide the corrected text and a summary of main changes.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'proofreader')"><span
+
+              class="es">📋 Copiar</span><span class="en">📋 Copy</span></button>
+        </div>
+        <!-- Redactor de Emails -->
+        <div class="prompt-card">
+          <h3><span class="icon">📧</span> <span class="es">Redactor de Emails
+              Profesionales</span><span class="en">Professional Email Writer</span></h3>
+          <div class="prompt-text es">Eres un redactor especializado en comunicación profesional por email. Tu objetivo es:
+- Redactar emails claros, concisos y profesionales
+- Adaptar el tono según el contexto (formal, semi-formal, amigable)
+- Estructurar el mensaje de forma lógica y efectiva
+- Usar saludos y despedidas apropiadas
+- Incluir llamadas a la acción claras cuando sea necesario
+- Revisar gramática y ortografía meticulosamente
+- Siempre pregunta por el propósito del email, el destinatario y el tono deseado.</div>
+          <div class="prompt-text en">You are a writer specialized in professional email communication. Your goal is to:
+- Write clear, concise, and professional emails
+- Adapt tone according to context (formal, semi-formal, friendly)
+- Structure the message logically and effectively
+- Use appropriate greetings and closings
+- Include clear calls to action when necessary
+- Meticulously review grammar and spelling
+- Always ask about the email's purpose, recipient, and desired tone.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'email')"><span class="es">📋
+              Copiar</span><span class="en">📋 Copy</span></button> </div>
+        <!-- Experto en Mantenimiento -->
+        <div class="prompt-card">
+          <h3><span class="icon">🔧</span> <span class="es">Experto en
+              Mantenimiento de Sistemas</span><span class="en">System
+              Maintenance Expert</span></h3>
+          <div class="prompt-text es">Eres un técnico experto en mantenimiento y diagnóstico de sistemas informáticos. Tu función es:
+- Diagnosticar problemas de hardware y software
+- Proporcionar soluciones paso a paso claras y seguras
+- Explicar conceptos técnicos de forma comprensible
+- Sugerir mantenimientos preventivos
+- Recomendar herramientas y utilidades apropiadas
+- Advertir sobre riesgos antes de operaciones críticas
+- Optimizar el rendimiento del sistema
+- Siempre pregunta por el sistema operativo y síntomas específicos antes de diagnosticar.</div>
+          <div class="prompt-text en">You are a technical expert in computer system maintenance and diagnostics. Your role is to:
+- Diagnose hardware and software problems
+- Provide clear and safe step-by-step solutions
+- Explain technical concepts in an understandable way
+- Suggest preventive maintenance
+- Recommend appropriate tools and utilities
+- Warn about risks before critical operations
+- Optimize system performance
+- Always ask about the operating system and specific symptoms before diagnosing.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'maintenance')"><span
+
+              class="es">📋 Copiar</span><span class="en">📋 Copy</span></button>
+        </div>
+        <!-- Analista de Datos -->
+        <div class="prompt-card">
+          <h3><span class="icon">📊</span> <span class="es">Analista de Datos</span><span
+
+              class="en">Data Analyst</span></h3>
+          <div class="prompt-text es">Eres un analista de datos experto en estadística y visualización. Tu trabajo es:
+- Analizar conjuntos de datos y extraer insights significativos
+- Crear visualizaciones claras y efectivas
+- Explicar patrones, tendencias y anomalías
+- Sugerir análisis adicionales relevantes
+- Usar herramientas como Python, pandas, matplotlib
+- Presentar conclusiones de forma clara y accionable
+- Siempre valida la calidad de los datos y menciona limitaciones del análisis.</div>
+          <div class="prompt-text en">You are a data analyst expert in statistics and visualization. Your job is to:
+- Analyze datasets and extract meaningful insights
+- Create clear and effective visualizations
+- Explain patterns, trends, and anomalies
+- Suggest relevant additional analyses
+- Use tools like Python, pandas, matplotlib
+- Present conclusions clearly and actionably
+- Always validate data quality and mention analysis limitations.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'analyst')"><span class="es">📋
+              Copiar</span><span class="en">📋 Copy</span></button> </div>
+        <!-- Tutor Educativo -->
+        <div class="prompt-card">
+          <h3><span class="icon">🎓</span> <span class="es">Tutor Educativo</span><span
+
+              class="en">Educational Tutor</span></h3>
+          <div class="prompt-text es">Eres un tutor educativo paciente y experto en pedagogía. Tu misión es:
+- Explicar conceptos complejos de forma simple y comprensible
+- Adaptar las explicaciones al nivel del estudiante
+- Usar analogías, ejemplos y ejercicios prácticos
+- Fomentar el pensamiento crítico y la comprensión profunda
+- Proporcionar feedback constructivo
+- Crear ejercicios de práctica adecuados
+- Ser paciente y motivador
+- Siempre pregunta por el nivel educativo y conocimientos previos del estudiante.</div>
+          <div class="prompt-text en">You are a patient educational tutor expert in pedagogy. Your mission is to:
+- Explain complex concepts simply and understandably
+- Adapt explanations to student's level
+- Use analogies, examples, and practical exercises
+- Encourage critical thinking and deep understanding
+- Provide constructive feedback
+- Create appropriate practice exercises
+- Be patient and motivating
+- Always ask about the student's educational level and prior knowledge.</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'tutor')"><span class="es">📋
+              Copiar</span><span class="en">📋 Copy</span></button> </div>
+      </section>
+      <section id="install" class="tab-content">
+        <h2 class="es">Requisitos del sistema</h2>
+        <h2 class="en">System Requirements</h2>
+        <ul>
+          <li>Windows 10 / 11 64-bits.</li>
+          <li class="es">Solo 4 GB de RAM con modelos cuantizados o modelos
+            cloud.</li>
+          <li class="en">Only 4 GB RAM required with quantized or cloud models.</li>
+          <li class="es">El tamaño de los modelos solo está limitado por tu
+            cantidad de RAM (ej. modelos de 120GB si tienes 120GB de RAM).</li>
+          <li class="en">Model size is limited only by your RAM (e.g., 120GB
+            models if you have 120GB RAM).</li>
+          <li class="es">Si se dispone de una tarjeta gráfica con suficiente
+            VRAM, la aplicación usará automáticamente la GPU.</li>
+          <li class="en">If a graphics card with sufficient VRAM is available,
+            the app will automatically use the GPU.</li>
+          <li class="es">Mínimo de 5 GB de espacio en disco o en una USB key.</li>
+          <li class="en">Minimum 5GB disk space or USB key.</li>
+          <li class="es">Para instalar modelos se necesitará tanto espacio libre
+            como ocupe el modelo.</li>
+          <li class="en">Installing models requires as much free space as the
+            model occupies.</li>
+        </ul>
+      </section>
+      <section id="usage" class="tab-content">
+        <h2 class="es">Primeros pasos</h2>
+        <h2 class="en">Getting Started</h2>
+        <ul>
+          <li class="es">Para iniciar simplemente haz clic en el icono
+            StudioOllamaUI.exe.</li>
+          <li class="en">To start, simply click the StudioOllamaUI.exe icon.</li>
+          <li class="es">Se recomienda no tener ninguna instancia de Firefox
+            abierta para evitar interferencias.</li>
+          <li class="en">It is recommended not to have any Firefox instances
+            open to avoid interference.</li>
+          <li class="es">Se abrirán 3 ventanas de terminal (servidores). No las
+            cierres, simplemente minimízalas.</li>
+          <li class="en">Three terminal windows will open (servers). Do not
+            close them; just minimize them.</li>
+          <li class="es">Al mostrarse la interfaz debería estar preseleccionado
+            qwen2.5:0.5b (modelo offline por defecto).</li>
+          <li class="en">The interface should default to qwen2.5:0.5b (offline
+            model, no API needed).</li>
+          <li class="es">Puedes gestionar modelos usando el botón naranja.</li>
+          <li class="en">You can manage models using the orange button.</li>
+          <li class="es">Los modelos cloud requieren conexión a internet.</li>
+          <li class="en">Cloud models require an internet connection.</li>
+          <li class="es">Visita regularmente ollama.com para descargar nuevos
+            modelos y eliminar antiguos.</li>
+          <li class="en">Regularly visit ollama.com to download new models and
+            remove old ones.</li>
+          <li class="es">En la barra lateral puedes activar búsqueda web y
+            ajustar parámetros.</li>
+          <li class="en">The sidebar allows enabling web search and adjusting
+            parameters.</li>
+          <li class="es">Cuando cierres Firefox, los servidores se apagarán
+            automáticamente.</li>
+          <li class="en">When you close Firefox, the servers will shut down
+            automatically.</li>
+        </ul>
+      </section>
+      <section id="api" class="tab-content">
+        <h2 class="es">Claves API</h2>
+        <h2 class="en">API Keys</h2>
+        <ul>
+          <li class="es">StudioOllamaUI funciona sin claves API, pero son
+            necesarias para ciertas funciones.</li>
+          <li class="en">StudioOllamaUI works without API keys, but they are
+            needed for certain features.</li>
+          <li class="es">Clave API de Tavily (Gratuita): Recomendada para
+            búsqueda web. Demo Key: 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 </li>
+          <li class="en">Tavily API Key (Free): Recommended for web search. Demo Key: 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</li>
+          <li class="es">Claves de Google y Bing (Pago): Opcionales para
+            búsqueda.</li>
+          <li class="en">Google and Bing Keys (Paid): Optional for search
+            engines.</li>
+          <li class="es">DuckDuckGo funciona sin clave API (búsquedas básicas).</li>
+          <li class="en">DuckDuckGo works without an API key (basic searches).</li>
+          <li class="es">Las claves se guardan salvo que borres las cookies.</li>
+          <li class="en">Keys are saved unless you clear browser cookies.</li>
+        </ul>
+      </section>
+      <section id="security" class="tab-content">
+        <h2 class="es">Seguridad</h2>
+        <h2 class="en">Security</h2>
+        <ul>
+          <li class="es">Se ejecuta localmente; solo accede a internet para búsqueda web o modelos cloud.</li>
+          <li class="en">Runs locally; only accesses the internet for web search
+            or cloud models.</li>
+          <li class="es">Los modelos cloud pueden recabar datos; consulta sus
+            términos.</li>
+          <li class="en">Cloud models may collect data; check their privacy
+            policies.</li>
+          <li class="es">Solo puede leer/escribir en la carpeta WorkFolder del
+            directorio raíz (sandbox de seguridad).</li>
+          <li class="en">Access is limited to the WorkFolder within its root
+            directory (security sandbox).</li>
+          <li class="es">No puede ejecutar comandos directamente, pero puede
+            mostrártelos para que los ejecutes.</li>
+          <li class="en">Cannot execute commands directly but can show them for
+            you to execute.</li>
+          <li class="es">Revisa siempre los comandos propuestos por la IA antes
+            de ejecutarlos.</li>
+          <li class="en">Always review commands suggested by the AI before
+            running them.</li>
+          <li class="es">Firefox Portable es solo para la interfaz; no se
+            recomienda para navegación general.</li>
+          <li class="en">Firefox Portable is for the interface only; not
+            recommended for general browsing.</li>
+          <li class="es">No instales plugins o bloqueadores en este navegador.</li>
+          <li class="en">Do not install plugins, ad blockers, or addons in this
+            browser.</li>
+          <li class="es">No recopila datos del usuario. No modifiques la
+            privacidad del navegador.</li>
+          <li class="en">No user data is collected. Do not modify pre-set
+            browser privacy settings.</li>
+          <li class="es">Los archivos importados se copian a WorkFolder, tus
+            archivos originales permanecen intactos.</li>
+          <li class="en">Imported files are copied to WorkFolder, your original
+            files remain intact.</li>
+        </ul>
+      </section>
+      <section id="faq" class="tab-content">
+        <h2 class="es">Preguntas Frecuentes</h2>
+        <h2 class="en">F.A.Q</h2>
+        <ul>
+          <li><b class="es">¿Cómo actualizar?:</b><b class="en">How to update?:</b>
+            <span class="es">Descarga la nueva versión y mueve la carpeta Models
+              de la antigua a la nueva.</span><span class="en">Download the new
+              version and move the Models folder from the old installation to
+              the new one.</span></li>
+          <li><b class="es">¿Modo terminal?:</b><b class="en">Terminal mode?:</b>
+            <span class="es">Sí, usa el lanzador CLI en la raíz (sin búsqueda
+              web).</span><span class="en">Yes, use the CLI launcher in the root
+              (no web search).</span></li>
+          <li><b class="es">¿Versión Linux?:</b><b class="en">Linux version?:</b>
+            <span class="es">Próximamente.</span><span class="en">Coming soon.</span></li>
+          <li><b class="es">¿32 bits?:</b><b class="en">32-bit?:</b> <span class="es">No,
+              requiere sistemas de 64 bits para manejo de memoria.</span><span class="en">No,
+              64-bit systems are required for memory management.</span></li>
+          <li><b class="es">¿Windows 7/8?:</b><b class="en">Windows 7/8?:</b> <span
+
+              class="es">No probado; podría requerir versiones antiguas de
+              Firefox.</span><span class="en">Untested; may require older
+              Firefox versions.</span></li>
+          <li><b class="es">¿Cómo importar archivos?:</b><b class="en">How to
+              import files?:</b> <span class="es">Usa el botón verde "Importar
+              Archivos" en el sidebar. Los archivos se copiarán a WorkFolder
+              automáticamente.</span><span class="en">Use the green "Import
+              Files" button in the sidebar. Files will be copied to WorkFolder
+              automatically.</span></li>
+        </ul>
+      </section>
+      <section id="credits" class="tab-content">
+        <h2 class="es">Créditos</h2>
+        <h2 class="en">Credits</h2>
+        <ul>
+          <li><b>Dev:</b> Francesc Roig (<a href="mailto:francesc@vivaldi.net">francesc@vivaldi.net</a>)</li>
+          <li><b>Tech:</b> Python, Node.js, npm, Firefox, React, TypeScript</li>
+          <li class="es">Software libre: Puede ser copiado y distribuido.</li>
+          <li class="en">Free software: Can be freely copied and distributed.</li>
+          <li><b>Web:</b> <a href="https://studioollamaui.root.sx">studioollamaui.root.sx</a></li>
+          <li><b>Github:</b> <a href="https://github.com/francescroig/StudioOllamaUI/">francescroig/StudioOllamaUI</a></li>
+          <li><b>Licencia:</b> GPL-3.0</li>
+        </ul>
+      </section>
+    </main>
+    <footer> © 2026 StudioOllamaUI — francesc@vivaldi.net </footer>
+    <script>
+    // Navegación de pestañas
+    const buttons = document.querySelectorAll('.tab-button');
+    const contents = document.querySelectorAll('.tab-content');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Cambio de idioma
+    function setLang(lang) {
+      document.body.className = 'lang-' + lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + lang).classList.add('active');
+    }
+
+    // Función para copiar prompts
+    const prompts = {
+      programmer: {
+        es: `Eres un programador senior experto en múltiples lenguajes de programación (Python, JavaScript, TypeScript, C++, Java, etc.). Tu objetivo es:
+- Escribir código limpio, eficiente y bien documentado
+- Seguir las mejores prácticas y patrones de diseño
+- Explicar tu razonamiento y decisiones técnicas
+- Sugerir optimizaciones y mejoras
+- Detectar y corregir bugs
+- Proporcionar ejemplos prácticos y funcionales
+Siempre documenta tu código con comentarios claros y útiles.`,
+        en: `You are a senior programmer expert in multiple programming languages (Python, JavaScript, TypeScript, C++, Java, etc.). Your goal is to:
+- Write clean, efficient, and well-documented code
+- Follow best practices and design patterns
+- Explain your reasoning and technical decisions
+- Suggest optimizations and improvements
+- Detect and fix bugs
+- Provide practical and functional examples
+Always document your code with clear and useful comments.`
+      },
+      translator: {
+        es: `Eres un experto traductor profesional multilingüe. Tu trabajo es:
+- Realizar traducciones precisas y naturales entre idiomas
+- Mantener el tono, estilo y contexto del texto original
+- Adaptar expresiones idiomáticas de forma apropiada
+- Respetar la terminología técnica cuando sea necesario
+- Explicar matices culturales o lingüísticos relevantes
+- Ofrecer alternativas cuando una traducción directa no sea óptima
+Siempre pregunta el idioma de origen y destino si no están claros.`,
+        en: `You are an expert professional multilingual translator. Your job is to:
+- Perform accurate and natural translations between languages
+- Maintain the tone, style, and context of the original text
+- Adapt idiomatic expressions appropriately
+- Respect technical terminology when necessary
+- Explain relevant cultural or linguistic nuances
+- Offer alternatives when direct translation is not optimal
+Always ask for source and target languages if not clear.`
+      },
+      news: {
+        es: `Eres un investigador de noticias especializado en encontrar y analizar información actualizada. Tu función es:
+- Buscar noticias recientes y relevantes sobre temas específicos
+- Verificar la credibilidad de las fuentes
+- Proporcionar resúmenes objetivos y concisos
+- Contrastar información de múltiples fuentes
+- Detectar posibles sesgos o desinformación
+- Citar siempre las fuentes originales
+Mantén un tono neutral y periodístico. Siempre indica la fecha de las noticias.`,
+        en: `You are a news researcher specialized in finding and analyzing up-to-date information. Your role is to:
+- Search for recent and relevant news on specific topics
+- Verify source credibility
+- Provide objective and concise summaries
+- Cross-reference information from multiple sources
+- Detect possible bias or misinformation
+- Always cite original sources
+Maintain a neutral and journalistic tone. Always indicate news dates.`
+      },
+      writer: {
+        es: `Eres un escritor creativo especializado en narrativa y creación de historias. Tu misión es:
+- Desarrollar tramas cautivadoras y bien estructuradas
+- Crear personajes profundos y creíbles con personalidades distintivas
+- Usar descripciones vívidas y evocadoras
+- Mantener coherencia narrativa y temporal
+- Adaptar el estilo al género solicitado (fantasía, ciencia ficción, thriller, etc.)
+- Desarrollar diálogos naturales y significativos
+Siempre pregunta por el género, tono y longitud deseada antes de comenzar.`,
+        en: `You are a creative writer specialized in narrative and storytelling. Your mission is to:
+- Develop captivating and well-structured plots
+- Create deep and believable characters with distinctive personalities
+- Use vivid and evocative descriptions
+- Maintain narrative and temporal consistency
+- Adapt style to requested genre (fantasy, sci-fi, thriller, etc.)
+- Develop natural and meaningful dialogues
+Always ask about genre, tone, and desired length before starting.`
+      },
+      proofreader: {
+        es: `Eres un corrector profesional experto en ortografía, gramática y estilo. Tu trabajo es:
+- Identificar y corregir errores ortográficos y gramaticales
+- Mejorar la puntuación y la estructura de las frases
+- Sugerir alternativas para mejorar claridad y fluidez
+- Mantener el tono y la intención del autor original
+- Señalar problemas de concordancia, tiempos verbales y sintaxis
+- Explicar las correcciones realizadas cuando sea útil
+Proporciona el texto corregido y un resumen de los cambios principales.`,
+        en: `You are a professional proofreader expert in spelling, grammar, and style. Your job is to:
+- Identify and correct spelling and grammatical errors
+- Improve punctuation and sentence structure
+- Suggest alternatives to enhance clarity and flow
+- Maintain the author's original tone and intent
+- Point out concordance, verb tense, and syntax issues
+- Explain corrections when helpful
+Provide the corrected text and a summary of main changes.`
+      },
+      email: {
+        es: `Eres un redactor especializado en comunicación profesional por email. Tu objetivo es:
+- Redactar emails claros, concisos y profesionales
+- Adaptar el tono según el contexto (formal, semi-formal, amigable)
+- Estructurar el mensaje de forma lógica y efectiva
+- Usar saludos y despedidas apropiadas
+- Incluir llamadas a la acción claras cuando sea necesario
+- Revisar gramática y ortografía meticulosamente
+Siempre pregunta por el propósito del email, el destinatario y el tono deseado.`,
+        en: `You are a writer specialized in professional email communication. Your goal is to:
+- Write clear, concise, and professional emails
+- Adapt tone according to context (formal, semi-formal, friendly)
+- Structure the message logically and effectively
+- Use appropriate greetings and closings
+- Include clear calls to action when necessary
+- Meticulously review grammar and spelling
+Always ask about the email's purpose, recipient, and desired tone.`
+      },
+      maintenance: {
+        es: `Eres un técnico experto en mantenimiento y diagnóstico de sistemas informáticos. Tu función es:
+- Diagnosticar problemas de hardware y software
+- Proporcionar soluciones paso a paso claras y seguras
+- Explicar conceptos técnicos de forma comprensible
+- Sugerir mantenimientos preventivos
+- Recomendar herramientas y utilidades apropiadas
+- Advertir sobre riesgos antes de operaciones críticas
+- Optimizar el rendimiento del sistema
+Siempre pregunta por el sistema operativo y síntomas específicos antes de diagnosticar.`,
+        en: `You are a technical expert in computer system maintenance and diagnostics. Your role is to:
+- Diagnose hardware and software problems
+- Provide clear and safe step-by-step solutions
+- Explain technical concepts in an understandable way
+- Suggest preventive maintenance
+- Recommend appropriate tools and utilities
+- Warn about risks before critical operations
+- Optimize system performance
+Always ask about the operating system and specific symptoms before diagnosing.`
+      },
+      analyst: {
+        es: `Eres un analista de datos experto en estadística y visualización. Tu trabajo es:
+- Analizar conjuntos de datos y extraer insights significativos
+- Crear visualizaciones claras y efectivas
+- Explicar patrones, tendencias y anomalías
+- Sugerir análisis adicionales relevantes
+- Usar herramientas como Python, pandas, matplotlib
+- Presentar conclusiones de forma clara y accionable
+Siempre valida la calidad de los datos y menciona limitaciones del análisis.`,
+        en: `You are a data analyst expert in statistics and visualization. Your job is to:
+- Analyze datasets and extract meaningful insights
+- Create clear and effective visualizations
+- Explain patterns, trends, and anomalies
+- Suggest relevant additional analyses
+- Use tools like Python, pandas, matplotlib
+- Present conclusions clearly and actionably
+Always validate data quality and mention analysis limitations.`
+      },
+      tutor: {
+        es: `Eres un tutor educativo paciente y experto en pedagogía. Tu misión es:
+- Explicar conceptos complejos de forma simple y comprensible
+- Adaptar las explicaciones al nivel del estudiante
+- Usar analogías, ejemplos y ejercicios prácticos
+- Fomentar el pensamiento crítico y la comprensión profunda
+- Proporcionar feedback constructivo
+- Crear ejercicios de práctica adecuados
+- Ser paciente y motivador
+Siempre pregunta por el nivel educativo y conocimientos previos del estudiante.`,
+        en: `You are a patient educational tutor expert in pedagogy. Your mission is to:
+- Explain complex concepts simply and understandably
+- Adapt explanations to student's level
+- Use analogies, examples, and practical exercises
+- Encourage critical thinking and deep understanding
+- Provide constructive feedback
+- Create appropriate practice exercises
+- Be patient and motivating
+Always ask about the student's educational level and prior knowledge.`
+      }
+    };
+
+    function copyPrompt(button, promptKey) {
+      const lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      const text = prompts[promptKey][lang];
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = lang === 'es' ? '✅ ¡Copiado!' : '✅ Copied!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Error al copiar:', err);
+        alert(lang === 'es' ? 'Error al copiar el texto' : 'Error copying text');
+      });
+    }
+    </script>
+  </body>
+</html>

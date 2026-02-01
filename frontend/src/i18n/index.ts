@@ -4,9 +4,6 @@
  * This is free software, and you are welcome to redistribute it
  * under certain conditions; see the LICENSE file for details.
  */
-export default {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
+export { I18nProvider, useTranslation } from './I18nContext';
+export { translations } from './translations';
+export type { Language, TranslationKey } from './translations';

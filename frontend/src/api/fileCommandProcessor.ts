@@ -1,3 +1,9 @@
+/**
+ * StudioOllamaUI  Copyright (C) 2026  francescroig
+ * This program comes with ABSOLUTELY NO WARRANTY.
+ * This is free software, and you are welcome to redistribute it
+ * under certain conditions; see the LICENSE file for details.
+ */
 import { fileService } from './fileService';
 
 // Tipos de comandos que el modelo puede ejecutar
@@ -10,13 +16,13 @@ export type FileCommand =
 /**
  * Procesa comandos de archivo embebidos en la respuesta del modelo
  * 
- * Formato esperado:
- * [FILE_READ: /ruta/archivo]
- * [FILE_WRITE: /ruta/archivo]
+ * Formato esperado (con rutas RELATIVAS):
+ * [FILE_READ: archivo.txt]
+ * [FILE_WRITE: nuevo.txt]
  * contenido aqui
  * [END_FILE_WRITE]
- * [FILE_LIST: /ruta/carpeta]
- * [FILE_CREATE_DIR: /ruta/nueva/carpeta]
+ * [FILE_LIST: subcarpeta]
+ * [FILE_CREATE_DIR: nueva/carpeta]
  */
 export class FileCommandProcessor {
   /**
@@ -54,7 +60,7 @@ export class FileCommandProcessor {
         console.log('✅ [FileCommandProcessor] Archivo guardado exitosamente');
         
         // Limpiar el comando del texto
-        cleanedText = cleanedText.replace(writeMatch[0], '');
+        cleanedText = cleanedText.replace(writeMatch[0], `\n✅ Archivo creado: ${filePath}\n`);
       } catch (error) {
         console.error('❌ [FileCommandProcessor] Error al escribir archivo:', error);
         results.push({
@@ -62,6 +68,7 @@ export class FileCommandProcessor {
           status: '✗ Error',
           result: String(error)
         });
+        cleanedText = cleanedText.replace(writeMatch[0], `\n❌ Error creando archivo: ${error}\n`);
       }
     } else {
       console.log('ℹ️  [FileCommandProcessor] No se encontraron comandos FILE_WRITE');
@@ -75,47 +82,56 @@ export class FileCommandProcessor {
     while ((otherMatch = otherRegex.exec(text)) !== null) {
       foundOther = true;
       const command = otherMatch[1];
-      const path = otherMatch[2].trim();
+      const requestedPath = otherMatch[2].trim();
 
       console.log(`📂 [FileCommandProcessor] Encontrado FILE_${command}`);
-      console.log('   Ruta:', path);
+      console.log('   Ruta solicitada:', requestedPath);
 
       try {
         switch (command) {
           case 'READ': {
-            const content = await fileService.readFile(path);
+            const content = await fileService.readFile(requestedPath);
             results.push({
-              command: `FILE_READ: ${path}`,
+              command: `FILE_READ: ${requestedPath}`,
               status: '✓ Éxito',
               result: `Archivo leído (${content.length} caracteres)`
             });
             // Reemplazar con el contenido real del archivo en un formato muy claro
-            cleanedText = cleanedText.replace(otherMatch[0], `[ARCHIVO_LEÍDO]\nRuta: ${path}\nContenido:\n${content}\n[FIN_ARCHIVO]`);
+            cleanedText = cleanedText.replace(
+              otherMatch[0], 
+              `\n━━━━━ ARCHIVO LEÍDO: ${requestedPath} ━━━━━\n${content}\n━━━━━ FIN DEL ARCHIVO ━━━━━\n`
+            );
             console.log('✅ Archivo leído exitosamente:', content.substring(0, 100));
             break;
           }
 
           case 'LIST': {
-            const files = await fileService.listFiles(path);
-            const fileList = files.map(f => `  - ${f.name} (${f.type})`).join('\n');
+            const files = await fileService.listFiles(requestedPath);
+            const fileList = files.length > 0 
+              ? files.map(f => `  📄 ${f.name}${f.type === 'directory' ? '/' : ''} ${f.size ? `(${f.size} bytes)` : ''}`).join('\n')
+              : '  (carpeta vacía)';
             results.push({
-              command: `FILE_LIST: ${path}`,
+              command: `FILE_LIST: ${requestedPath}`,
               status: '✓ Éxito',
               result: `${files.length} items encontrados`
             });
-            cleanedText = cleanedText.replace(otherMatch[0], `[Carpeta ${path}:\n${fileList}]`);
-            console.log('✅ Carpeta listada exitosamente');
+            const displayPath = requestedPath || 'WorkFolder';
+            cleanedText = cleanedText.replace(
+              otherMatch[0], 
+              `\n━━━━━ ARCHIVOS EN: ${displayPath} ━━━━━\n${fileList}\n━━━━━ TOTAL: ${files.length} archivos ━━━━━\n`
+            );
+            console.log('✅ Carpeta listada exitosamente:', files.length, 'archivos');
             break;
           }
 
           case 'CREATE_DIR': {
-            await fileService.createDirectory(path);
+            await fileService.createDirectory(requestedPath);
             results.push({
-              command: `FILE_CREATE_DIR: ${path}`,
+              command: `FILE_CREATE_DIR: ${requestedPath}`,
               status: '✓ Éxito',
               result: `Directorio creado`
             });
-            cleanedText = cleanedText.replace(otherMatch[0], '');
+            cleanedText = cleanedText.replace(otherMatch[0], `\n✅ Carpeta creada: ${requestedPath}\n`);
             console.log('✅ Directorio creado exitosamente');
             break;
           }
@@ -123,10 +139,11 @@ export class FileCommandProcessor {
       } catch (error) {
         console.error(`❌ [FileCommandProcessor] Error en FILE_${command}:`, error);
         results.push({
-          command: `FILE_${command}: ${path}`,
+          command: `FILE_${command}: ${requestedPath}`,
           status: '✗ Error',
           result: String(error)
         });
+        cleanedText = cleanedText.replace(otherMatch[0], `\n❌ Error: ${error}\n`);
       }
     }
 
@@ -148,39 +165,115 @@ export class FileCommandProcessor {
    */
   static getSystemPromptAddition(): string {
     return `
-## SISTEMA DE MANEJO DE ARCHIVOS
+## 💾 SISTEMA DE ARCHIVOS SEGURO
 
-Tienes acceso a un sistema de lectura y escritura de archivos. Los comandos se procesan automáticamente.
+Tienes acceso a un sistema de archivos SANDBOX en la carpeta "WorkFolder".
 
-### LEER ARCHIVO:
-Cuando necesites leer un archivo, usa:
-[FILE_READ: /ruta/completa/archivo.txt]
+🔒 REGLAS DE SEGURIDAD:
+- SOLO puedes acceder a archivos dentro de WorkFolder
+- USA SIEMPRE rutas RELATIVAS (sin C:\\, sin rutas absolutas)
+- NO uses "..", no puedes salir de WorkFolder
 
-El sistema leerá el archivo y reemplazará tu comando con:
-[ARCHIVO_LEÍDO]
-Ruta: /ruta/completa/archivo.txt
-Contenido:
-<contenido real del archivo aquí>
-[FIN_ARCHIVO]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-IMPORTANTE: Cuando veas [ARCHIVO_LEÍDO]...[FIN_ARCHIVO], ese es el contenido REAL del archivo. Debes procesar y analizar ese contenido exacto, no generar contenido ficticio.
+### 📄 LISTAR ARCHIVOS:
 
-### ESCRIBIR ARCHIVO (crear o sobrescribir):
-[FILE_WRITE: /ruta/completa/archivo.txt]
-contenido que deseas guardar
+**Para la raíz de WorkFolder:**
+[FILE_LIST: .]
+
+**Para una subcarpeta:**
+[FILE_LIST: subcarpeta]
+
+**Verás algo como:**
+━━━━━ ARCHIVOS EN: WorkFolder ━━━━━
+  📄 documento.txt (1024 bytes)
+  📄 imagen.png (2048 bytes)
+  📄 carpeta/
+━━━━━ TOTAL: 3 archivos ━━━━━
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 📝 LEER UN ARCHIVO:
+
+**Sintaxis:**
+[FILE_READ: nombre_archivo.txt]
+
+**Para archivo en subcarpeta:**
+[FILE_READ: subcarpeta/archivo.txt]
+
+**Verás algo como:**
+━━━━━ ARCHIVO LEÍDO: documento.txt ━━━━━
+Contenido real del archivo aquí...
+━━━━━ FIN DEL ARCHIVO ━━━━━
+
+⚠️ IMPORTANTE: Este es contenido REAL. No inventes contenido.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### ✍️ ESCRIBIR/CREAR ARCHIVO:
+
+**Sintaxis:**
+[FILE_WRITE: nombre_archivo.txt]
+Contenido que quieres escribir.
+Puede tener múltiples líneas.
 [END_FILE_WRITE]
 
-### LISTAR CARPETA:
-[FILE_LIST: /ruta/carpeta]
+**Para crear en subcarpeta:**
+[FILE_WRITE: subcarpeta/nuevo.txt]
+Contenido aquí
+[END_FILE_WRITE]
 
-### CREAR DIRECTORIO:
-[FILE_CREATE_DIR: /ruta/nueva/carpeta]
+**Verás:**
+✅ Archivo creado: nombre_archivo.txt
 
-NOTAS IMPORTANTES:
-- Usa rutas ABSOLUTAS (ej: C:\\Users\\francesc\\WorkFolder\\archivo.txt en Windows)
-- Los comandos se procesan automáticamente después de tu respuesta
-- Cuando leas archivos, analiza el contenido REAL entre [ARCHIVO_LEÍDO] y [FIN_ARCHIVO]
-- No inventes contenido de archivos, siempre usa los comandos para leer
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 📂 CREAR CARPETA:
+
+**Sintaxis:**
+[FILE_CREATE_DIR: nombre_carpeta]
+
+**Para subcarpetas:**
+[FILE_CREATE_DIR: carpeta/subcarpeta]
+
+**Verás:**
+✅ Carpeta creada: nombre_carpeta
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## ❗ EJEMPLOS CORRECTOS vs INCORRECTOS:
+
+✅ CORRECTO:
+[FILE_LIST: .]
+[FILE_READ: documento.txt]
+[FILE_WRITE: nuevo.txt]
+[FILE_READ: carpeta/archivo.txt]
+
+❌ INCORRECTO (NO HAGAS ESTO):
+[FILE_LIST: C:\\Users\\francesc\\WorkFolder]  ← NO rutas absolutas
+[FILE_READ: ../../../system.txt]  ← NO puedes salir de WorkFolder
+[FILE_WRITE: C:\\Windows\\archivo.txt]  ← NO rutas fuera del sandbox
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 🎯 FLUJO DE TRABAJO TÍPICO:
+
+1. Listar archivos disponibles:
+   [FILE_LIST: .]
+
+2. Leer un archivo:
+   [FILE_READ: documento.txt]
+
+3. Procesar el contenido
+
+4. Crear resultado:
+   [FILE_WRITE: resultado.txt]
+   Tu análisis aquí
+   [END_FILE_WRITE]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECUERDA: Solo rutas RELATIVAS, sin "..", sin rutas absolutas.
 `;
   }
 }

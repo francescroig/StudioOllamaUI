@@ -1,16 +1,29 @@
+/**
+ * StudioOllamaUI  Copyright (C) 2026  francescroig
+ * This program comes with ABSOLUTELY NO WARRANTY.
+ * This is free software, and you are welcome to redistribute it
+ * under certain conditions; see the LICENSE file for details.
+ */
 import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
-import { Send, Square, Loader2, FileText, Code, Globe, WifiOff, Terminal, Copy, Check } from 'lucide-react';
+import { Send, Square, Loader2, FileText, Code, Globe, WifiOff, Terminal, Copy, Check, Eraser } from 'lucide-react';
 import { ollamaService } from '../api/ollamaService';
 import { searchService } from '../api/searchService';
+import { FileCommandProcessor } from '../api/fileCommandProcessor';
+import { useTranslation } from '../i18n';
+import TerminalPanel from './TerminalPanel';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
+import logoImage from '../logo.png';
 
 export default function ChatArea() {
   const state = useStore();
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [searchStatus, setSearchStatus] = useState('');
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -68,6 +81,17 @@ export default function ChatArea() {
     setTimeout(() => setCopiedCommand(null), 2000);
   };
 
+  // Función para añadir log a la terminal
+  const addTerminalLog = (content: string) => {
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+    setTerminalLogs(prev => [...prev, `[${timestamp}] ${content}`]);
+  };
+
+  // Función para limpiar terminal
+  const clearTerminalLogs = () => {
+    setTerminalLogs([]);
+  };
+
   const openCommandInTerminal = (command: string) => {
     // Intentar abrir CMD con el comando
     const cmdCommand = `start cmd.exe /k "${command}"`;
@@ -79,23 +103,23 @@ export default function ChatArea() {
       body: JSON.stringify({ command: cmdCommand })
     }).catch(err => {
       console.error('Error abriendo terminal:', err);
-      alert('No se pudo abrir la terminal. Copia el comando manualmente.');
+      alert(t('errorTerminal'));
     });
   };
 
   const performWebSearch = async (query: string) => {
-    setSearchStatus('🌐 Buscando en la web...');
+    setSearchStatus(t('searchingWeb'));
     
     try {
       const results = await searchService.search(query, state.searchEngine);
       
       if (results.length === 0) {
-        setSearchStatus('❌ No se encontraron resultados');
+        setSearchStatus(t('noResults'));
         setTimeout(() => setSearchStatus(''), 3000);
         return null;
       }
 
-      setSearchStatus(`✅ ${results.length} resultados encontrados`);
+      setSearchStatus(`${t('foundResults')} ${results.length} ${t('results')}`);
       setTimeout(() => setSearchStatus(''), 2000);
       
       return {
@@ -110,11 +134,11 @@ export default function ChatArea() {
       if (errorMsg.includes('API key no configurada')) {
         setSearchStatus('⚠️ ' + errorMsg);
       } else if (errorMsg.includes('Network') || errorMsg.includes('ENOTFOUND') || errorMsg.includes('timeout')) {
-        setSearchStatus('❌ Error estableciendo conexión a la red');
+        setSearchStatus('❌ ' + t('noConnection'));
       } else if (errorMsg.includes('401') || errorMsg.includes('403')) {
-        setSearchStatus('❌ API Key inválida o expirada');
+        setSearchStatus('❌ ' + t('apiKeyInvalid'));
       } else {
-        setSearchStatus('❌ ' + (errorMsg || 'Error en la búsqueda web'));
+        setSearchStatus('❌ ' + (errorMsg || t('searchError')));
       }
       
       setTimeout(() => setSearchStatus(''), 5000);
@@ -125,7 +149,7 @@ export default function ChatArea() {
   const handleSend = async () => {
     if (!input.trim() || state.isGenerating) return;
     if (!state.selectedModel) {
-      alert('Por favor selecciona un modelo primero');
+      alert(t('selectModelFirst'));
       return;
     }
 
@@ -138,13 +162,33 @@ export default function ChatArea() {
     try {
       let contextMessages = [...state.messages, userMessage];
 
+      // LIMITAR CONTEXTO: Solo enviar últimos N mensajes (sin contar system prompts)
+      const contextSize = state.contextSize || 6; // 6 mensajes = 3 pares pregunta-respuesta
+      const userMessages = contextMessages.filter(m => m.role !== 'system');
+      const limitedUserMessages = userMessages.slice(-contextSize);
+      
       // Añadir prompt global si existe
+      let systemPromptContent = '';
+      
+      // Añadir instrucciones de manejo de archivos SOLO si el usuario menciona archivos
+      const mentionsFiles = /archivo|file|carpeta|folder|leer|read|escribir|write|guardar|save|workfolder/i.test(userQuery);
+      if (mentionsFiles) {
+        systemPromptContent += FileCommandProcessor.getSystemPromptAddition();
+      }
+      
       if (state.globalPrompt && state.globalPrompt.trim()) {
+        systemPromptContent += '\n\n' + state.globalPrompt.trim();
+      }
+      
+      // Reconstruir mensajes: system prompt + mensajes limitados
+      if (systemPromptContent) {
         const globalSystemPrompt = {
           role: 'system' as const,
-          content: state.globalPrompt.trim()
+          content: systemPromptContent
         };
-        contextMessages = [globalSystemPrompt, ...contextMessages];
+        contextMessages = [globalSystemPrompt, ...limitedUserMessages];
+      } else {
+        contextMessages = limitedUserMessages;
       }
 
       // Si búsqueda web está activada
@@ -176,28 +220,49 @@ export default function ChatArea() {
 
       let fullResponse = '';
       
+      // Limpiar logs anteriores al iniciar nueva generación
+      setTerminalLogs([]);
+      
       await ollamaService.generateResponse(
         state.selectedModel,
         contextMessages,
         (chunk: string, stats?: any) => {
           if (stats) {
             // Actualizar tokens
-            const currentTokens = state.tokenStats?.totalTokens || 0;
-            const newTokens = (stats.promptTokens || 0) + (stats.completionTokens || 0);
-            state.setTokenStats({ totalTokens: currentTokens + newTokens });
+            const currentStats = state.tokenStats || { totalTokens: 0, inputTokens: 0, outputTokens: 0 };
+            const newInputTokens = stats.promptTokens || 0;
+            const newOutputTokens = stats.completionTokens || 0;
+            state.setTokenStats({ 
+              totalTokens: currentStats.totalTokens + newInputTokens + newOutputTokens,
+              inputTokens: currentStats.inputTokens + newInputTokens,
+              outputTokens: currentStats.outputTokens + newOutputTokens
+            });
           } else {
             fullResponse += chunk;
             state.updateLastMessage(fullResponse);
           }
         },
         state.reasoningLevel === 'fast' ? 'low' : state.reasoningLevel === 'deep' ? 'high' : 'medium',
-        state.criticalMode
+        state.criticalMode,
+        (log: string) => {
+          // Callback para logs de terminal
+          setTerminalLogs(prev => [...prev, log]);
+        }
       );
+
+      // Procesar comandos de archivo en la respuesta
+      const { cleanedText, results } = await FileCommandProcessor.processCommands(fullResponse);
+      
+      if (results.length > 0) {
+        console.log('Comandos procesados:', results);
+        // Actualizar el mensaje con el texto limpio y los resultados
+        state.updateLastMessage(cleanedText);
+      }
     } catch (error: any) {
       console.error('Error generating response:', error);
       
       if (error.message?.includes('fetch')) {
-        state.updateLastMessage('❌ Error: No se pudo conectar con Ollama. Verifica que el servidor esté corriendo.');
+        state.updateLastMessage(t('errorConnectingOllama'));
       } else {
         state.updateLastMessage('❌ Error: ' + error.message);
       }
@@ -214,18 +279,27 @@ export default function ChatArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0b0c10] h-screen overflow-hidden relative">
+    <div className="flex-1 flex flex-col bg-[#1a1c23] h-screen overflow-hidden relative">
       {/* Área de mensajes */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-4">
+      <div className={`overflow-y-auto overflow-x-hidden p-6 space-y-4 transition-all ${
+        isTerminalOpen ? 'h-[60%]' : 'flex-1'
+      }`}>
         {state.messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">
-              <p className="text-xl mb-2">👋 ¡Hola!</p>
-              <p className="text-sm">Escribe un mensaje para comenzar</p>
+              <div className="mb-6 flex justify-center">
+                <img 
+                  src={logoImage} 
+                  alt="StudioOllamaUI" 
+                  className="w-32 h-32 object-contain"
+                />
+              </div>
+              <p className="text-xl mb-2">{t('noMessagesYet')}</p>
+              <p className="text-sm">{t('startConversation')}</p>
               {state.webSearchEnabled && (
                 <p className="text-xs mt-2 text-blue-400 flex items-center justify-center gap-2">
                   <Globe size={14} />
-                  Búsqueda web activada ({state.searchEngine})
+                  {t('webSearchActive')} ({state.searchEngine})
                 </p>
               )}
             </div>
@@ -237,8 +311,8 @@ export default function ChatArea() {
                 <div 
                   className={`p-4 rounded-2xl break-words overflow-wrap-anywhere ${
                     m.role === 'user' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-[#1a1c23] text-gray-200 border border-gray-800'
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'bg-[#23252e] text-gray-200 border-2 border-gray-700'
                   }`}
                 >
                   {m.role === 'user' ? (
@@ -249,7 +323,8 @@ export default function ChatArea() {
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeHighlight]}
                         components={{
-                          code({node, inline, className, children, ...props}) {
+                          code({node, className, children, ...props}: any) {
+                            const inline = !className;
                             return inline ? (
                               <code className="bg-gray-800 px-1 py-0.5 rounded text-xs break-all" {...props}>
                                 {children}
@@ -271,8 +346,15 @@ export default function ChatArea() {
                           }
                         }}
                       >
-                        {m.content || '...'}
+                        {m.content || ''}
                       </ReactMarkdown>
+                      {!m.content && (
+                        <div className="flex items-center gap-2 py-2">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '0.6s' }}></div>
+                          <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '200ms', animationDuration: '0.6s' }}></div>
+                          <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '400ms', animationDuration: '0.6s' }}></div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -284,13 +366,13 @@ export default function ChatArea() {
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={() => exportMessage(m.content, 'txt')}
-                        className="bg-[#1a1c23]/80 hover:bg-gray-700 text-gray-400 px-2 py-1 rounded border border-gray-800 flex items-center gap-1 text-[9px] font-bold transition-all"
+                        className="bg-[#2a2d38] hover:bg-gray-600 text-gray-300 px-2 py-1 rounded border-2 border-gray-600 flex items-center gap-1 text-[9px] font-bold transition-all"
                       >
                         <FileText size={10}/> TXT
                       </button>
                       <button 
                         onClick={() => exportMessage(m.content, 'html')}
-                        className="bg-[#1a1c23]/80 hover:bg-gray-700 text-gray-400 px-2 py-1 rounded border border-gray-800 flex items-center gap-1 text-[9px] font-bold transition-all"
+                        className="bg-[#2a2d38] hover:bg-gray-600 text-gray-300 px-2 py-1 rounded border-2 border-gray-600 flex items-center gap-1 text-[9px] font-bold transition-all"
                       >
                         <Code size={10}/> HTML
                       </button>
@@ -307,7 +389,7 @@ export default function ChatArea() {
                     {m.searchMetadata && m.searchMetadata.sources && m.searchMetadata.sources.length > 0 && (
                       <div className="bg-blue-900/20 border border-blue-700/30 rounded p-2 text-[9px] space-y-1">
                         <div className="text-blue-400 font-bold uppercase flex items-center gap-1">
-                          <Globe size={10} /> Fuentes ({m.searchMetadata.engine}):
+                          <Globe size={10} /> {t('sources')} ({m.searchMetadata.engine}):
                         </div>
                         {m.searchMetadata.sources.slice(0, 3).map((source: any, idx: number) => (
                           <a 
@@ -322,7 +404,7 @@ export default function ChatArea() {
                         ))}
                         {m.searchMetadata.sources.length > 3 && (
                           <div className="text-gray-500">
-                            +{m.searchMetadata.sources.length - 3} más fuentes...
+                            +{m.searchMetadata.sources.length - 3} {t('moreSources')}
                           </div>
                         )}
                       </div>
@@ -332,7 +414,7 @@ export default function ChatArea() {
                     {m.role === 'assistant' && m.content && extractWindowsCommands(m.content).length > 0 && (
                       <div className="bg-green-900/20 border border-green-700/30 rounded p-2 space-y-2">
                         <div className="text-green-400 font-bold uppercase flex items-center gap-1 text-[9px]">
-                          <Terminal size={10} /> Comandos Windows Detectados:
+                          <Terminal size={10} /> {t('commandsDetected')}
                         </div>
                         {extractWindowsCommands(m.content).map((cmd, idx) => (
                           <div key={idx} className="bg-black/40 rounded p-2 font-mono text-[10px] text-green-300 flex items-center justify-between gap-2">
@@ -341,14 +423,14 @@ export default function ChatArea() {
                               <button
                                 onClick={() => copyToClipboard(cmd)}
                                 className="bg-green-700/30 hover:bg-green-700/50 p-1 rounded transition-all"
-                                title="Copiar comando"
+                                title={t('copyCommand')}
                               >
                                 {copiedCommand === cmd ? <Check size={12} /> : <Copy size={12} />}
                               </button>
                               <button
                                 onClick={() => openCommandInTerminal(cmd)}
                                 className="bg-blue-700/30 hover:bg-blue-700/50 p-1 rounded transition-all"
-                                title="Abrir en CMD"
+                                title={t('openInCmd')}
                               >
                                 <Terminal size={12} />
                               </button>
@@ -356,7 +438,7 @@ export default function ChatArea() {
                           </div>
                         ))}
                         <div className="text-[8px] text-gray-500">
-                          💡 Click en <Terminal size={8} className="inline"/> para abrir CMD con el comando
+                          {t('clickToOpenCmd')} <Terminal size={8} className="inline"/> {t('toOpenCmd')}
                         </div>
                       </div>
                     )}
@@ -370,11 +452,11 @@ export default function ChatArea() {
       </div>
 
       {/* Área de entrada */}
-      <div className="p-4 bg-[#0b0c10] border-t border-gray-800">
+      <div className="p-4 bg-[#13151a] border-t-2 border-gray-700">
         <div className="max-w-4xl mx-auto flex gap-2">
           <input 
-            className="flex-1 bg-[#1a1c23] border border-gray-800 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 disabled:opacity-50"
-            placeholder="Escribe un mensaje..."
+            className="flex-1 bg-[#1f2128] border-2 border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 disabled:opacity-50"
+            placeholder={t('writeMessage')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -388,7 +470,7 @@ export default function ChatArea() {
           {state.isGenerating ? (
             <button
               onClick={handleStop}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-all"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg"
             >
               <Square size={18} />
             </button>
@@ -396,41 +478,73 @@ export default function ChatArea() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || !state.selectedModel}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-all"
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg"
             >
               <Send size={18} />
             </button>
           )}
+          
+          {/* Botón de Terminal */}
+          <button
+            onClick={() => setIsTerminalOpen(!isTerminalOpen)}
+            className={`px-4 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg ${
+              isTerminalOpen 
+                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+            }`}
+            title={isTerminalOpen ? 'Cerrar Terminal' : 'Abrir Terminal'}
+          >
+            <Terminal size={18} />
+          </button>
+
+          {/* Botón Limpiar Contexto */}
+          <button
+            onClick={() => {
+              if (confirm(t('clearContextConfirm'))) {
+                // Limpiar solo los mensajes en memoria, no la conversación guardada
+                state.setMessages([]);
+              }
+            }}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg"
+            title={t('clearContextTooltip')}
+          >
+            <Eraser size={18} />
+          </button>
         </div>
         
-        {/* Indicadores de estado */}
-        {(state.isGenerating || searchStatus) && (
+        {/* Indicadores de estado - solo búsqueda web */}
+        {searchStatus && (
           <div className="max-w-4xl mx-auto mt-2 flex items-center gap-2 text-xs">
-            {searchStatus ? (
-              <div className={`flex items-center gap-2 ${
-                searchStatus.includes('❌') ? 'text-red-400' : 
-                searchStatus.includes('✅') ? 'text-green-400' : 
-                searchStatus.includes('⚠️') ? 'text-yellow-400' : 
-                'text-blue-400'
-              }`}>
-                {searchStatus.includes('estableciendo conexión') ? (
-                  <WifiOff size={14} />
-                ) : searchStatus.includes('Buscando') ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Globe size={14} />
-                )}
-                {searchStatus}
-              </div>
-            ) : state.isGenerating ? (
-              <div className="flex items-center gap-2 text-gray-500">
+            <div className={`flex items-center gap-2 ${
+              searchStatus.includes('❌') ? 'text-red-400' : 
+              searchStatus.includes('✅') ? 'text-green-400' : 
+              searchStatus.includes('⚠️') ? 'text-yellow-400' : 
+              'text-blue-400'
+            }`}>
+              {searchStatus.includes(t('noConnection')) ? (
+                <WifiOff size={14} />
+              ) : searchStatus.includes(t('searchingWeb')) ? (
                 <Loader2 size={14} className="animate-spin" />
-                Generando respuesta...
-              </div>
-            ) : null}
+              ) : (
+                <Globe size={14} />
+              )}
+              {searchStatus}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Panel de Terminal */}
+      {isTerminalOpen && (
+        <div className="h-[40%] border-t-2 border-gray-700">
+          <TerminalPanel 
+            isOpen={isTerminalOpen}
+            onClose={() => setIsTerminalOpen(false)}
+            logs={terminalLogs}
+            onClear={() => setTerminalLogs([])}
+          />
+        </div>
+      )}
     </div>
   );
 }
