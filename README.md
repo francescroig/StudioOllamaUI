@@ -2,6 +2,21 @@
 
 Portable graphical interface for Ollama, focused on privacy, ease of use, and local execution.
 
+## 📥 Download
+
+**Download the complete portable version (1.8 GB):**
+
+[![Download StudioOllamaUI](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/studioollamaui/files/latest/download)
+
+👉 **[SourceForge - StudioOllamaUI](https://sourceforge.net/projects/studioollamaui/)**
+
+**For developers - Clone the repository:**
+```bash
+git clone https://github.com/francescroig/StudioOllamaUI.git
+```
+
+---
+
 ## Description
 StudioOllamaUI is a fully portable application that allows interaction with LLM models through Ollama without complex installations. It is designed to run locally, preserve user privacy, and work from any folder or USB device.
 
@@ -45,14 +60,29 @@ GPL-3.0
 ## Credits
 Developer: Francesc Roig  
 Contact: francesc@vivaldi.net  
-GitHub: https://github.com/francescroig/StudioOllamaUI
-Sourceforge: https://sourceforge.net/projects/studioollamaui/
+GitHub: https://github.com/francescroig/StudioOllamaUI  
+SourceForge: https://sourceforge.net/projects/studioollamaui/
 
-
+---
 
 # StudioOllamaUI
 
 Interfaz gráfica portable para Ollama, enfocada en privacidad, facilidad de uso y ejecución local.
+
+## 📥 Descarga
+
+**Descarga la versión portable completa (1.8 GB):**
+
+[![Descargar StudioOllamaUI](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/studioollamaui/files/latest/download)
+
+👉 **[SourceForge - StudioOllamaUI](https://sourceforge.net/projects/studioollamaui/)**
+
+**Para desarrolladores - Clona el repositorio:**
+```bash
+git clone https://github.com/francescroig/StudioOllamaUI.git
+```
+
+---
 
 ## Descripción
 StudioOllamaUI es una aplicación totalmente portable que permite interactuar con modelos LLM mediante Ollama sin instalaciones complejas. Está pensada para ejecutarse de forma local, preservar la privacidad del usuario y funcionar desde cualquier carpeta o dispositivo USB.
@@ -97,5 +127,5 @@ GPL-3.0
 ## Créditos
 Desarrollo: Francesc Roig  
 Contacto: francesc@vivaldi.net  
-GitHub: https://github.com/francescroig/StudioOllamaUI
-Sourceforge: https://sourceforge.net/projects/studioollamaui/
+GitHub: https://github.com/francescroig/StudioOllamaUI  
+SourceForge: https://sourceforge.net/projects/studioollamaui/
